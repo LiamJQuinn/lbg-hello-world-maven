@@ -8,9 +8,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Get code from GitHub repository
+                // Get code from GitHub repository with explicit ref spec
                 git branch: 'main',
-                    url: 'https://github.com/LiamJQuinn/lbg-hello-world-maven.git'
+                    url: 'https://github.com/LiamJQuinn/lbg-hello-world-maven.git',
+                    changelog: false,
+                    poll: false
             }
         }
 
@@ -24,7 +26,7 @@ pipeline {
         stage('Test') {
             steps {
                 // Run tests and generate reports
-                sh "mvn -Dmaven.compile.skip test"
+                sh "mvn test"
             }
             post {
                 always {
@@ -33,11 +35,17 @@ pipeline {
                 }
             }
         }
+        
         stage('Package') {
             steps {
-                // Get code from GitHub repository
-                // Run tests and generate reports
-                sh "mvn -Dmaven.test.skip -Dmaven.compile.skip package"
+                // Package the application while skipping tests
+                sh "mvn package -DskipTests"
+            }
+            post {
+                success {
+                    // Archive the JAR file
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
             }
         }
     }
