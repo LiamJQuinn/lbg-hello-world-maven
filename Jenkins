@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'M3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Get code from GitHub repository
+                git branch: 'main',
+                    url: 'https://github.com/LiamJQuinn/lbg-hello-world-maven.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // Clean and compile the project
+                sh "mvn clean compile"
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Run tests and generate reports
+                sh "mvn -Dmaven.compile.skip test"
+            }
+            post {
+                always {
+                    // Publish test results
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Package') {
+            steps {
+                // Get code from GitHub repository
+                // Run tests and generate reports
+                sh "mvn -Dmaven.test.skip -Dmaven.compile.skip package"
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+        always {
+            // Clean workspace after build
+            cleanWs()
+        }
+    }
+}
